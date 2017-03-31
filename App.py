@@ -1,4 +1,8 @@
 import string
+from urllib.request import *
+import re, os
+
+print(chr(27) + "[2J") #acts as a universal 'clear' console method
 print("Input your avaliable letters, specify first and last letters")
 print("by putting them in bold at the start of the input")
 print("and for the ending, type them in bold at the end of the word :)")
@@ -10,7 +14,7 @@ print('')
 first = input('Enter your specified starting chars or nothing to not specify: ').lower()  #assigment of statements before code runs
 last = input('Enter your specified ending chars or nothing to not specify: ').lower()
 
-print('')  #blank line for readability
+print(chr(27) + "[2J")  #blank lines for readability
 
 def alphaword(self):
     _input = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] #holding numeric values           
@@ -61,8 +65,9 @@ def flsort():
     for word in readFile:  #cycles through output file to check fl letters
         actualWord = word[:20].strip(' ')        
         if flchecks(actualWord,first,last) == True:
-            actualPoints = word[21:25].strip(' ')
-            tempfile.write(actualWord + ' ' + actualPoints + '\n')    
+            actualPoints = word[20:24].strip(' ')  #definitions goes under here
+            define = word[25:].strip('\n')
+            tempfile.write(actualWord + ' ' + actualPoints + ' ' + define + '\n')    
     tempfile.close()
 
 def numsort():
@@ -77,10 +82,31 @@ def numsort():
     for i in range(len(tempRead)):  #re-adding the values back into the files
         tempfile.write(tempRead[i])
 
+def find(x):
+    srch = str(x)
+    x = urlopen("http://dictionary.reference.com/browse/"+srch+"?s=t").read().decode('utf-8')
+    items = re.findall('<meta name="description" content="'+".*$",x,re.MULTILINE)
+    for x in items:
+        y = x.replace('<meta name="description" content="','')
+        z = y.replace(' See more."/>','')
+        m = re.findall('at Dictionary.com, a free online dictionary with pronunciation,              synonyms and translation. Look it up now! "/>',z)
+        if m==[]:
+            if z.startswith("Get your reference question answered by Ask.com"):
+                return "Word not found!"
+            else:
+                return z
+    else:
+            return "Word not found!"
+
+def section(self):
+    self = str(self.split('.')[0])
+    self = self.split(', ')[1]
+    return self
+
 wordlist = open("ospd.txt","r")
 tempfile = open("temp.txt","w")
 
-returnWord = ''
+returnWord, definition = '', ''
 mainWord = alphaword(self)  #pass in input to sorter  
 
 for word in wordlist:  #loops till all words are checked
@@ -90,7 +116,12 @@ for word in wordlist:  #loops till all words are checked
         word = alphaword(returnWord)  #pass in word to sorter            
 
         if compare(mainWord, word) == True:  #compare words and add to output if word in self
-            tempfile.write(returnWord.ljust(20) + ' ' + str(points(word)).ljust(5) + '\n')
+            try:
+                definition = find(returnWord)  #gets definition of the particular word
+            except OSError:  #excepts the enevitable HTTPError that occurs
+                pass
+
+            tempfile.write(returnWord.ljust(20) + str(points(word)).ljust(5) + section(definition) + '\n')
 
 tempfile.close()
 
@@ -100,7 +131,7 @@ if first != '0' or last != '0':  #if the first and last need to be checked
     flsort()
 
 for i in open('temp.txt','r').readlines():
-    print(i.strip('\n'))
+    print(i)
 
-print('')
+os.remove("temp.txt") #removes the temp file
 print('Done!')
